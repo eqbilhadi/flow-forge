@@ -2,38 +2,76 @@
 
 namespace App\Models;
 
+use App\Enums\TriggerType;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Workflow extends Model
 {
-    protected $fillable = ['tenant_id', 'name', 'description', 'nodes', 'edges', 'status'];
+    use HasFactory, HasUuids, SoftDeletes;
 
-    protected $casts = [
-        'nodes' => 'array',
-        'edges' => 'array',
+    protected $fillable = [
+        'tenant_id',
+        'created_by',
+        'name',
+        'description',
+        'definition',
+        'version',
+        'is_active',
+        'trigger_type',
+        'cron_expression',
+        'timeout_seconds',
+        'tags',
     ];
 
-    // Hubungan ke Tenant
-    public function tenant()
+    protected $casts = [
+        'definition' => 'array',
+        'is_active' => 'boolean',
+        'trigger_type' => TriggerType::class,
+        'tags' => 'array',
+        'version' => 'integer',
+        'timeout_seconds' => 'integer',
+    ];
+
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
-    // Mengaktifkan fitur auto-filter berdasarkan tenant_id user yang sedang login
-    protected static function booted()
+    public function creator(): BelongsTo
     {
-        static::creating(function ($model) {
-            if (Auth::check() && ! $model->tenant_id) {
-                $model->tenant_id = Auth::user()->tenant_id;
-            }
-        });
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
-        static::addGlobalScope('tenant', function (Builder $builder) {
-            if (Auth::check()) {
-                $builder->where('tenant_id', Auth::user()->tenant_id);
-            }
-        });
+    public function runs(): HasMany
+    {
+        return $this->hasMany(WorkflowRun::class);
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(WorkflowVersion::class);
+    }
+
+    public function webhookTokens(): HasMany
+    {
+        return $this->hasMany(WebhookToken::class);
+    }
+
+    /**
+     * Scope to tenant — always apply for multi-tenancy
+     */
+    public function scopeForTenant($query, string $tenantId)
+    {
+        return $query->where('tenant_id', $tenantId);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 }

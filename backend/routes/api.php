@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WorkflowController;
+use App\Http\Controllers\WorkflowRunController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -8,10 +11,37 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('login', [AuthController::class, 'login']);
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
+    Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
 
-Route::middleware('auth.jwt')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::get('me', [AuthController::class, 'me']);
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
+        Route::get('/me', [AuthController::class, 'me'])->name('auth.me');
+        Route::post('/refresh', [AuthController::class, 'refresh'])->name('auth.refresh');
+    });
+});
 
+Route::middleware('auth:api')->group(function () {
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/health', [DashboardController::class, 'health'])->name('dashboard.health');
+        Route::get('/recent-runs', [DashboardController::class, 'recentRuns'])->name('dashboard.recent-runs');
+    });
+
+    // Workflows
+    Route::apiResource('workflows', WorkflowController::class);
+    Route::prefix('workflows/{workflow}')->group(function () {
+        Route::post('/trigger', [WorkflowController::class, 'trigger'])->name('workflows.trigger');
+        Route::get('/runs', [WorkflowController::class, 'runs'])->name('workflows.runs');
+        Route::get('/versions', [WorkflowController::class, 'versions'])->name('workflows.versions');
+        Route::post('/rollback', [WorkflowController::class, 'rollback'])->name('workflows.rollback');
+    });
+
+    // Workflow Runs
+    Route::prefix('runs/{run}')->group(function () {
+        Route::get('/', [WorkflowRunController::class, 'show'])->name('runs.show');
+        Route::post('/cancel', [WorkflowRunController::class, 'cancel'])->name('runs.cancel');
+        Route::get('/logs', [WorkflowRunController::class, 'logs'])->name('runs.logs');
+        Route::post('/analyze-failure', [WorkflowRunController::class, 'analyzeFailure'])->name('runs.analyze');
+    });
 });
