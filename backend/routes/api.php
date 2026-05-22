@@ -4,13 +4,15 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\WorkflowRunController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Health check
+Route::get('/health', fn () => response()->json([
+    'status'    => 'ok',
+    'timestamp' => now()->toISOString(),
+]));
 
+// Auth
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
     Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
@@ -22,7 +24,9 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api'])->group(function () {
+
+    // Dashboard
     Route::prefix('dashboard')->group(function () {
         Route::get('/health', [DashboardController::class, 'health'])->name('dashboard.health');
         Route::get('/recent-runs', [DashboardController::class, 'recentRuns'])->name('dashboard.recent-runs');
@@ -37,7 +41,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/rollback', [WorkflowController::class, 'rollback'])->name('workflows.rollback');
     });
 
-    // Workflow Runs
+    // Runs
     Route::prefix('runs/{run}')->group(function () {
         Route::get('/', [WorkflowRunController::class, 'show'])->name('runs.show');
         Route::post('/cancel', [WorkflowRunController::class, 'cancel'])->name('runs.cancel');

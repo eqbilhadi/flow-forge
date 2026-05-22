@@ -68,9 +68,9 @@ class DatabaseSeeder extends Seeder
                 ],
                 [
                     'id' => 'wait_a_moment',
-                    'name' => 'Wait 500ms',
+                    'name' => 'Wait 10 seconds',
                     'type' => 'delay',
-                    'config' => ['duration_ms' => 500],
+                    'config' => ['duration_ms' => 10000],
                     'depends_on' => ['fetch_data'],
                 ],
                 [
