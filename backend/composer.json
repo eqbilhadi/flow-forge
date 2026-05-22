@@ -10,11 +10,13 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "google-gemini-php/laravel": "^2.0",
         "laravel/framework": "^13.8",
         "laravel/reverb": "^1.10",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "openai-php/client": "^0.19.2",
+        "openai-php/laravel": "^0.19.1",
         "php-open-source-saver/jwt-auth": "^2.9",
         "spatie/laravel-permission": "^7.4",
         "spatie/laravel-query-builder": "^7.3"

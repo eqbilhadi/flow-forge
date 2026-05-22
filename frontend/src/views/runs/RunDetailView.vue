@@ -129,6 +129,7 @@ const workflowsStore = useWorkflowsStore()
 const run = ref(workflowsStore.currentRun)
 const loading = ref(true)
 const aiAnalysis = ref<string | null>(null)
+const analysisError = ref<string | null>(null)
 const analyzingFailure = ref(false)
 const { connected } = useRunChannel(route.params.id as string)
 
@@ -155,10 +156,17 @@ async function cancelRun() {
 
 async function analyzeFailure() {
   if (!run.value) return
+
   analyzingFailure.value = true
+  aiAnalysis.value = null
+  analysisError.value = null
+
   try {
     const { data } = await runsApi.analyzeFailure(run.value.id)
     aiAnalysis.value = data.analysis
+  } catch (e: any) {
+    const msg = e.response?.data?.message ?? e.message ?? 'Gagal menganalisis failure.'
+    analysisError.value = `Analisis gagal: ${msg}`
   } finally {
     analyzingFailure.value = false
   }

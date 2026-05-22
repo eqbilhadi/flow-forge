@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AIController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WorkflowController;
@@ -47,5 +48,11 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/cancel', [WorkflowRunController::class, 'cancel'])->name('runs.cancel');
         Route::get('/logs', [WorkflowRunController::class, 'logs'])->name('runs.logs');
         Route::post('/analyze-failure', [WorkflowRunController::class, 'analyzeFailure'])->name('runs.analyze');
+    });
+
+    // AI Features
+    Route::prefix('ai')->group(function () {
+        Route::post('/generate-workflow', [AIController::class, 'generateWorkflow'])->name('ai.generate');
+        Route::post('/validate-definition', [AIController::class, 'validateDefinition'])->name('ai.validate');
     });
 });
